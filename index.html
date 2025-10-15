@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ECC COMPUTER LAB WEEKLY SCHEDULE</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(to right, #004AAD, #FFD700);
+      color: #fff;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 10px;
+      letter-spacing: 2px;
+    }
+
+    .form-container {
+      background: #fff;
+      color: #000;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      margin: 20px auto;
+      max-width: 700px;
+    }
+
+    .form-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .form-row div {
+      flex: 1;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      display: block;
+      margin-top: 5px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 6px;
+      font-size: 14px;
+      border: 2px solid #004AAD;
+      border-radius: 6px;
+      box-sizing: border-box;
+      margin-top: 5px;
+    }
+
+    button {
+      background-color: #004AAD;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #FFD700;
+      color: #000;
+    }
+
+    .message {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      color: #000;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid #ddd;
+      min-width: 100px;
+    }
+
+    th {
+      background: #004AAD;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background: #f4f4f4;
+    }
+
+    td.time {
+      background: #FFD700;
+      font-weight: bold;
+    }
+
+    td:empty {
+      background-color: #fff7cc;
+    }
+
+    .week-section {
+      background: rgba(255,255,255,0.9);
+      color: #000;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+
+    .week-header {
+      background: #004AAD;
+      color: white;
+      padding: 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    #downloadBtn, #resetBtn {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    #downloadBtn {
+      background-color: #FFD700;
+      color: #000;
+    }
+
+    #resetBtn {
+      background-color: red;
+      color: #fff;
+    }
+
+    #downloadBtn:hover {
+      background-color: #004AAD;
+      color: white;
+    }
+
+    #resetBtn:hover {
+      background-color: darkred;
+    }
+  </style>
+</head>
+<body>
+  <h1>ECUMENICAL CHRISTIAN COLLEGE<br>COMPUTER LAB WEEKLY SCHEDULE</h1>
+
+  <div class="form-container">
+    <form id="scheduleForm">
+      <div class="form-row">
+        <div>
+          <label>Teacher:</label>
+          <input type="text" id="teacher" placeholder="Enter teacher's name" required>
+        </div>
+        <div>
+          <label>Section:</label>
+          <input type="text" id="section" placeholder="10-Luther" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Day:</label>
+          <select id="day" required>
+            <option value="">Select Day</option>
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+          </select>
+        </div>
+        <div>
+          <label>Time (e.g., 8:00 - 9:00):</label>
+          <input type="text" id="time" placeholder="HH:MM - HH:MM" required>
+        </div>
+      </div>
+
+      <button type="submit">Add to Schedule</button>
+    </form>
+  </div>
+
+  <div class="message" id="message"></div>
+  <div id="weekContainer"></div>
+
+  <button id="downloadBtn">📥 Download All Schedules (Word)</button>
+  <button id="resetBtn">🧹 Reset All Schedules</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <script>
+    const form = document.getElementById("scheduleForm");
+    const message = document.getElementById("message");
+    const weekContainer = document.getElementById("weekContainer");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let allWeeks = JSON.parse(localStorage.getItem("ECC_WeeklySchedules")) || {};
+
+    function getCurrentWeekRange() {
+      const today = new Date();
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - today.getDay() + 1);
+      const friday = new Date(monday);
+      friday.setDate(monday.getDate() + 4);
+      return {
+        start: monday.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        end: friday.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        key: `${monday.getFullYear()}-${monday.getMonth() + 1}-${monday.getDate()}`
+      };
+    }
+
+    const currentWeek = getCurrentWeekRange();
+    if (!allWeeks[currentWeek.key]) {
+      allWeeks[currentWeek.key] = { label: `Week of ${currentWeek.start} - ${currentWeek.end}`, scheduleData: {} };
+      localStorage.setItem("ECC_WeeklySchedules", JSON.stringify(allWeeks));
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const teacher = document.getElementById("teacher").value.trim();
+      const section = document.getElementById("section").value.trim();
+      const day = document.getElementById("day").value.trim();
+      const time = document.getElementById("time").value.trim();
+
+      if (!teacher || !section || !day || !time) {
+        message.style.color = "red";
+        message.textContent = "⚠️ Please fill in all fields.";
+        return;
+      }
+
+      const [startStr, endStr] = time.split("-").map(t => t.trim());
+      const start = parseTime(startStr);
+      const end = parseTime(endStr);
+      if (!start || !end || end <= start) {
+        message.style.color = "red";
+        message.textContent = "⚠️ Invalid time format. Use HH:MM - HH:MM.";
+        return;
+      }
+
+      const weekData = allWeeks[currentWeek.key].scheduleData;
+
+      for (const existingTime in weekData) {
+        const data = weekData[existingTime];
+        const [exStartStr, exEndStr] = existingTime.split("-").map(t => t.trim());
+        const exStart = parseTime(exStartStr);
+        const exEnd = parseTime(exEndStr);
+        if (data[day] && (start < exEnd && end > exStart)) {
+          message.style.color = "red";
+          message.textContent = "⚠️ Conflict detected on " + day + "!";
+          return;
+        }
+      }
+
+      if (!weekData[time]) {
+        weekData[time] = { Monday: "", Tuesday: "", Wednesday: "", Thursday: "", Friday: "" };
+      }
+      weekData[time][day] = `${section} - ${teacher}`;
+
+      allWeeks[currentWeek.key].scheduleData = Object.fromEntries(
+        Object.entries(weekData).sort(([a], [b]) => parseTime(a.split("-")[0]) - parseTime(b.split("-")[0]))
+      );
+
+      localStorage.setItem("ECC_WeeklySchedules", JSON.stringify(allWeeks));
+      message.style.color = "green";
+      message.textContent = "✅ Schedule added successfully!";
+      renderAllWeeks();
+      form.reset();
+    });
+
+    function parseTime(t) {
+      const [h, m] = t.split(":").map(Number);
+      if (isNaN(h) || isNaN(m)) return null;
+      return h * 60 + m;
+    }
+
+    function renderAllWeeks() {
+      weekContainer.innerHTML = "";
+      Object.values(allWeeks).forEach(week => {
+        const weekDiv = document.createElement("div");
+        weekDiv.classList.add("week-section");
+
+        const header = document.createElement("div");
+        header.classList.add("week-header");
+        header.textContent = week.label;
+        weekDiv.appendChild(header);
+
+        const table = document.createElement("table");
+        const thead = document.createElement("thead");
+        const tbody = document.createElement("tbody");
+
+        const weekDates = getWeekDatesFor(week.label);
+        thead.innerHTML = `
+          <tr>
+            <th>Time</th>
+            <th>Monday (${weekDates.Monday})</th>
+            <th>Tuesday (${weekDates.Tuesday})</th>
+            <th>Wednesday (${weekDates.Wednesday})</th>
+            <th>Thursday (${weekDates.Thursday})</th>
+            <th>Friday (${weekDates.Friday})</th>
+          </tr>`;
+
+        Object.keys(week.scheduleData).forEach(time => {
+          const d = week.scheduleData[time];
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="time">${time}</td>
+            <td>${d.Monday || ""}</td>
+            <td>${d.Tuesday || ""}</td>
+            <td>${d.Wednesday || ""}</td>
+            <td>${d.Thursday || ""}</td>
+            <td>${d.Friday || ""}</td>`;
+          tbody.appendChild(row);
+        });
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        weekDiv.appendChild(table);
+        weekContainer.appendChild(weekDiv);
+      });
+    }
+
+    function getWeekDatesFor(label) {
+      const parts = label.match(/([A-Za-z]+ \d{1,2}, \d{4}) - ([A-Za-z]+ \d{1,2}, \d{4})/);
+      if (!parts) return {};
+      const start = new Date(parts[1]);
+      const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+      const dates = {};
+      for (let i = 0; i < 5; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        dates[weekDays[i]] = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+      return dates;
+    }
+
+    downloadBtn.addEventListener("click", () => {
+      let content = "ECUMENICAL CHRISTIAN COLLEGE\nCOMPUTER LAB WEEKLY SCHEDULES\n\n";
+      Object.values(allWeeks).forEach(week => {
+        content += `${week.label}\nTime\tMonday\tTuesday\tWednesday\tThursday\tFriday\n`;
+        Object.keys(week.scheduleData).forEach(time => {
+          const d = week.scheduleData[time];
+          content += `${time}\t${d.Monday || ""}\t${d.Tuesday || ""}\t${d.Wednesday || ""}\t${d.Thursday || ""}\t${d.Friday || ""}\n`;
+        });
+        content += "\n";
+      });
+      const blob = new Blob([content], { type: "application/msword" });
+      saveAs(blob, "ECC_Computer_Lab_Schedules.doc");
+    });
+
+    resetBtn.addEventListener("click", () => {
+      if (confirm("⚠️ Are you sure you want to reset ALL schedules?")) {
+        localStorage.removeItem("ECC_WeeklySchedules");
+        allWeeks = {};
+        renderAllWeeks();
+      }
+    });
+
+    renderAllWeeks();
+  </script>
+</body>
+</html>
